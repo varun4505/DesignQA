@@ -1,0 +1,94 @@
+# -----------------------------
+# Global ignores for DesignQA repository
+# Covers: Node, Vite, TypeScript, editor files, OS files, build artifacts
+# -----------------------------
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Package manager caches
+.npm/
+.yarn/
+
+# Lockfiles - keep them in repo (do not ignore)
+
+# TypeScript
+*.tsbuildinfo
+
+# Vite / Frontend
+/frontend/dist/
+/frontend/build/
+/frontend/node_modules/
+/frontend/.vite/
+/frontend/.cache/
+
+# Backend
+/backend/node_modules/
+/backend/dist/
+/backend/build/
+
+# Output
+/dist/
+/build/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Runtime data
+.cache/
+.temp/
+
+# Environment
+.env
+.env.local
+.env.*.local
+/.env
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+Icon?
+
+# Coverage
+/coverage/
+coverage-final.json
+.nyc_output/
+
+# Misc
+*.tgz
+*.log
+
+# JetBrains
+.idea/
+
+# Windows temporary files
+~$*
+*.lnk
+
+# Visual Studio Code workspace
+*.code-workspace
+
+# Optional: ignore local build/test artifacts
+# .turbo/
+# .next/
