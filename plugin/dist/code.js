@@ -9,6 +9,41 @@ figma.showUI(__html__, {
 });
 // Store for analysis results
 let analysisCache = new Map();
+// Helper functions for new features
+function checkHierarchy(node) {
+    const issues = [];
+    // Check for generic names
+    if (node.name.match(/^(Frame|Group|Rectangle|Ellipse)\s*\d+$/)) {
+        issues.push({
+            type: 'hierarchy',
+            subType: 'generic-name',
+            severity: 'warning',
+            message: `Generic name detected: "${node.name}"`,
+            nodeId: node.id,
+            nodeName: node.name,
+            suggestedFix: 'Rename with meaningful description'
+        });
+    }
+    // Check for empty groups
+    if ('children' in node && node.children.length === 0) {
+        issues.push({
+            type: 'hierarchy',
+            subType: 'empty-group',
+            severity: 'error',
+            message: `Empty group detected: "${node.name}"`,
+            nodeId: node.id,
+            nodeName: node.name,
+            suggestedFix: 'Remove empty group or add content'
+        });
+    }
+    // Recursively check children
+    if ('children' in node) {
+        for (const child of node.children) {
+            issues.push(...checkHierarchy(child));
+        }
+    }
+    return issues;
+}
 // Message handler from UI
 figma.ui.onmessage = async (msg) => {
     console.log('Received message:', msg.type);
@@ -70,7 +105,8 @@ async function analyzeSelection() {
         structure: [],
         typography: [],
         layout: [],
-        components: []
+        components: [],
+        hierarchy: []
     };
     for (const node of selection) {
         const nodeResults = await analyzeNode(node);
@@ -79,6 +115,8 @@ async function analyzeSelection() {
         results.typography.push(...nodeResults.typography);
         results.layout.push(...nodeResults.layout);
         results.components.push(...nodeResults.components);
+        // Add results from new checks
+        results.hierarchy.push(...checkHierarchy(node));
     }
     figma.ui.postMessage({
         type: 'analysis-complete',
@@ -86,8 +124,10 @@ async function analyzeSelection() {
         summary: {
             total: selection.length,
             issues: results.accessibility.length + results.structure.length +
-                results.typography.length + results.layout.length,
-            critical: results.accessibility.filter((i) => i.severity === 'critical').length
+                results.typography.length + results.layout.length +
+                results.hierarchy.length,
+            critical: results.accessibility.filter((i) => i.severity === 'critical').length +
+                results.hierarchy.filter((i) => i.severity === 'critical').length
         }
     });
 }
