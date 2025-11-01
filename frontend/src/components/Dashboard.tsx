@@ -27,17 +27,35 @@ export default function Dashboard({ results, summary, isAnalyzing }: DashboardPr
         <p className="text-sm text-figma-text-secondary mb-4">
           Select layers and click "Analyze Selection" to start
         </p>
-        <div className="bg-figma-bg-hover rounded-lg p-4 text-left max-w-sm mx-auto">
-          <h4 className="font-medium mb-2 text-sm">What we check:</h4>
-          <ul className="text-xs text-figma-text-secondary space-y-1">
-            <li>• Accessibility & contrast ratios (WCAG)</li>
-            <li>• Typography consistency & hierarchy</li>
-            <li>• Touch target sizes (mobile-friendly)</li>
-            <li>• Layout alignment & spacing</li>
-            <li>• Component structure & naming</li>
-            <li>• Prototype flow integrity</li>
-          </ul>
-        </div>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <button
+                onClick={() => parent.postMessage({ pluginMessage: { type: 'analyze-selection' } }, '*')}
+                className="flex-1 bg-figma-primary text-white px-4 py-2 rounded hover:bg-figma-primary-hover"
+              >
+                Analyze Selection
+              </button>
+              <button
+                onClick={() => parent.postMessage({ pluginMessage: { type: 'analyze-density' } }, '*')}
+                className="flex-1 bg-figma-bg-secondary text-figma-text px-4 py-2 rounded hover:bg-figma-bg-hover"
+              >
+                Analyze Density
+              </button>
+            </div>
+
+            <div className="bg-figma-bg-hover rounded-lg p-4 text-left max-w-sm mx-auto">
+              <h4 className="font-medium mb-2 text-sm">What we check:</h4>
+              <ul className="text-xs text-figma-text-secondary space-y-1">
+                <li>• Accessibility & contrast ratios (WCAG)</li>
+                <li>• Typography consistency & hierarchy</li>
+                <li>• Touch target sizes (mobile-friendly)</li>
+                <li>• Layout alignment & spacing</li>
+                <li>• Component structure & naming</li>
+                <li>• Prototype flow integrity</li>
+                <li>• Element density distribution</li>
+              </ul>
+            </div>
+          </div>
       </div>
     )
   }

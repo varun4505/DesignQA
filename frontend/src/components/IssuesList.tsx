@@ -28,6 +28,7 @@ export default function IssuesList({ results, onApplyFix, onApplyAllFixes, onSel
   const categories = [
     { key: 'accessibility', label: 'Accessibility', issues: results.accessibility, color: 'red' },
     { key: 'structure', label: 'Structure', issues: results.structure, color: 'blue' },
+    { key: 'hierarchy', label: 'Hierarchy', issues: results.hierarchy, color: 'orange' },
     { key: 'typography', label: 'Typography', issues: results.typography, color: 'yellow' },
     { key: 'layout', label: 'Layout', issues: results.layout, color: 'purple' },
     { key: 'components', label: 'Components', issues: results.components, color: 'green' },
