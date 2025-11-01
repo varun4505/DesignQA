@@ -1,0 +1,24 @@
+{
+  "name": "DesignQA",
+  "id": "designqa-ai-auditor",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/index.html",
+  "editorType": [
+    "figma",
+    "figjam"
+  ],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://api.groq.com",
+      "https://generativelanguage.googleapis.com",
+      "*"
+    ],
+    "reasoning": "Required for AI-powered design analysis and suggestions using Groq/Gemini API"
+  },
+  "documentAccess": "dynamic-page",
+  "capabilities": [],
+  "permissions": [
+    "activeusers"
+  ]
+}

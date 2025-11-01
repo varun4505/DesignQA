@@ -1,0 +1,31 @@
+{
+  "name": "designqa-plugin",
+  "version": "1.0.0",
+  "description": "AI-powered design quality and accessibility auditor for Figma",
+  "main": "dist/code.js",
+  "scripts": {
+    "build": "npm run build:code && npm run build:ui",
+    "build:code": "tsc --project tsconfig.code.json",
+    "build:ui": "cd ../frontend && npm run build:plugin",
+    "watch": "concurrently \"npm run watch:code\" \"npm run watch:ui\"",
+    "watch:code": "tsc --project tsconfig.code.json --watch",
+    "watch:ui": "cd ../frontend && npm run dev",
+    "dev": "npm run watch"
+  },
+  "keywords": [
+    "figma",
+    "plugin",
+    "accessibility",
+    "ai",
+    "design-qa"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@figma/plugin-typings": "^1.99.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.9.3"
+  }
+}
