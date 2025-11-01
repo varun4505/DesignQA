@@ -1,4 +1,5 @@
 declare let analysisCache: Map<string, any>;
+declare function checkHierarchy(node: SceneNode): any[];
 declare function analyzeSelection(): Promise<void>;
 declare function analyzePage(): Promise<void>;
 declare function analyzeNode(node: SceneNode): Promise<any>;
