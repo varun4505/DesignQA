@@ -148,6 +148,58 @@ figma.ui.onmessage = async (msg: any) => {
         await applySingleFix(msg.fix);
         break;
 
+      case 'highlight-section': {
+        const { row, col, frameWidth, frameHeight } = msg;
+        const cellWidth = frameWidth / 10;
+        const cellHeight = frameHeight / 10;
+        
+        // Calculate section bounds
+        const sectionLeft = col * cellWidth;
+        const sectionTop = row * cellHeight;
+        
+        // Get current selection
+        const selection = figma.currentPage.selection;
+        if (selection.length === 1 && selection[0].type === 'FRAME') {
+          const frame = selection[0] as FrameNode;
+          
+          // Remove any existing highlights first
+          const existingHighlights = figma.currentPage.findAll(node => 
+            node.type === 'RECTANGLE' && node.name === 'density-highlight'
+          );
+          existingHighlights.forEach(node => node.remove());
+          
+          // Create highlight rectangle
+          const highlight = figma.createRectangle();
+          highlight.name = 'density-highlight';
+          highlight.x = frame.x + sectionLeft;
+          highlight.y = frame.y + sectionTop;
+          highlight.resize(cellWidth, cellHeight);
+          highlight.fills = [{type: 'SOLID', color: {r: 0.28, g: 1, b: 0.52}, opacity: 0.3}];
+          highlight.strokes = [{type: 'SOLID', color: {r: 0.28, g: 1, b: 0.52}}];
+          highlight.strokeWeight = 2;
+          
+          // Add to page and ensure it's above the frame
+          if (frame.parent) {
+            frame.parent.appendChild(highlight);
+            // Move highlight above the frame in the layer stack
+            const index = frame.parent.children.indexOf(frame);
+            if (index !== -1) {
+              frame.parent.insertChild(index + 1, highlight);
+            }
+          }
+        }
+        break;
+      }
+
+      case 'remove-highlight': {
+        // Remove any existing highlights
+        const existingHighlights = figma.currentPage.findAll(node => 
+          node.type === 'RECTANGLE' && node.name === 'density-highlight'
+        );
+        existingHighlights.forEach(node => node.remove());
+        break;
+      }
+
       case 'export-report':
         await exportReport(msg.format);
         break;

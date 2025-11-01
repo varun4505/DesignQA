@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface DensityMapProps {
   densityMap: number[][]
@@ -8,8 +8,14 @@ interface DensityMapProps {
   childCount: number
 }
 
+interface SelectedCell {
+  row: number
+  col: number
+}
+
 const DensityMap = ({ densityMap, frameName, frameWidth, frameHeight, childCount }: DensityMapProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [selectedCell, setSelectedCell] = useState<SelectedCell | null>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -29,11 +35,16 @@ const DensityMap = ({ densityMap, frameName, frameWidth, frameHeight, childCount
     densityMap.forEach((row, i) => {
       row.forEach((density, j) => {
         const intensity = density / maxDensity
-        ctx.fillStyle = `rgba(255, 71, 133, ${Math.min(0.9, intensity)})`
+        const isSelected = selectedCell?.row === i && selectedCell?.col === j
+        
+        // Use green for selected cell, pink for others
+        ctx.fillStyle = isSelected
+          ? `rgba(71, 255, 133, ${Math.min(0.9, intensity)})`
+          : `rgba(255, 71, 133, ${Math.min(0.9, intensity)})`
         ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize)
         
         // Draw cell borders
-        ctx.strokeStyle = '#2c2c2c'
+        ctx.strokeStyle = isSelected ? '#47ff85' : '#2c2c2c'
         ctx.strokeRect(j * cellSize, i * cellSize, cellSize, cellSize)
 
         // Draw density number
@@ -50,7 +61,7 @@ const DensityMap = ({ densityMap, frameName, frameWidth, frameHeight, childCount
         }
       })
     })
-  }, [densityMap])
+  }, [densityMap, selectedCell])
 
   return (
     <div className="p-4 bg-figma-bg-secondary rounded-lg">
@@ -65,12 +76,50 @@ const DensityMap = ({ densityMap, frameName, frameWidth, frameHeight, childCount
         ref={canvasRef}
         width={200}
         height={200}
-        className="border border-figma-border rounded"
+        className="border border-figma-border rounded cursor-pointer"
+        onClick={(e) => {
+          const canvas = canvasRef.current
+          if (!canvas) return
+
+          const rect = canvas.getBoundingClientRect()
+          const x = e.clientX - rect.left
+          const y = e.clientY - rect.top
+          
+          const cellSize = 20
+          const col = Math.floor(x / cellSize)
+          const row = Math.floor(y / cellSize)
+          
+          if (row >= 0 && row < 10 && col >= 0 && col < 10) {
+            // If clicking the same cell, deselect it
+            if (selectedCell?.row === row && selectedCell?.col === col) {
+              setSelectedCell(null)
+              // Send message to remove highlight
+              parent.postMessage({ 
+                pluginMessage: { 
+                  type: 'remove-highlight'
+                }
+              }, '*')
+            } else {
+              // Select new cell
+              setSelectedCell({ row, col })
+              // Send message to highlight this section
+              parent.postMessage({ 
+                pluginMessage: { 
+                  type: 'highlight-section',
+                  row,
+                  col,
+                  frameWidth,
+                  frameHeight
+                }
+              }, '*')
+            }
+          }
+        }}
       />
       
       <div className="mt-4 text-sm text-figma-text-secondary">
         <p>Density map shows number of overlapping elements in each cell.</p>
-        <p>Darker colors indicate higher density.</p>
+        <p>Higher numbers indicate higher density.</p>
       </div>
     </div>
   )
