@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard'
 import IssuesList from './components/IssuesList'
 import SmartRename from './components/SmartRename'
 import ExportReport from './components/ExportReport'
+import DensityMap from './components/DensityMap'
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
 
 export interface Issue {
@@ -24,6 +25,15 @@ export interface AnalysisResults {
   layout: Issue[]
   components: Issue[]
   prototypes?: Issue[]
+  hierarchy: Issue[]
+}
+
+export interface DensityData {
+  densityMap: number[][]
+  frameName: string
+  frameWidth: number
+  frameHeight: number
+  childCount: number
 }
 
 export interface AnalysisSummary {
@@ -37,7 +47,8 @@ function App() {
   const [results, setResults] = useState<AnalysisResults | null>(null)
   const [summary, setSummary] = useState<AnalysisSummary | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'issues' | 'rename' | 'export'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'issues' | 'rename' | 'export' | 'density'>('dashboard')
+  const [densityData, setDensityData] = useState<DensityData | null>(null)
 
   useEffect(() => {
     // Listen for messages from plugin code
@@ -49,6 +60,10 @@ function App() {
       console.log('Received from plugin:', msg.type)
 
       switch (msg.type) {
+        case 'density-result':
+          setDensityData(msg.data)
+          setActiveTab('density')
+          break;
         case 'analysis-start':
           setIsAnalyzing(true)
           setResults(null)
@@ -147,6 +162,13 @@ function App() {
           >
             Analyze Page
           </button>
+          <button
+            onClick={() => parent.postMessage({ pluginMessage: { type: 'analyze-density' } }, '*')}
+            disabled={isAnalyzing}
+            className="flex-1 bg-figma-bg-secondary hover:bg-figma-bg-hover disabled:opacity-50 disabled:cursor-not-allowed text-figma-text px-4 py-2 rounded-md text-sm font-medium transition-colors"
+          >
+            Analyze Density
+          </button>
         </div>
       </div>
 
@@ -157,6 +179,7 @@ function App() {
           { id: 'issues', label: 'Issues' },
           { id: 'rename', label: 'Smart Rename' },
           { id: 'export', label: 'Export' },
+          { id: 'density', label: 'Density Map' },
         ].map(tab => (
           <button
             key={tab.id}
@@ -180,6 +203,11 @@ function App() {
             summary={summary} 
             isAnalyzing={isAnalyzing}
           />
+        )}
+        {activeTab === 'density' && densityData && (
+          <div className="max-w-md mx-auto">
+            <DensityMap {...densityData} />
+          </div>
         )}
         {activeTab === 'issues' && (
           <IssuesList 

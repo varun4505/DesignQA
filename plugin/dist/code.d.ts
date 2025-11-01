@@ -1,4 +1,6 @@
 declare let analysisCache: Map<string, any>;
+declare function analyzeDensity(frame: FrameNode): number[][];
+declare function analyzeDensityCommand(): Promise<void>;
 declare function checkHierarchy(node: SceneNode): any[];
 declare function analyzeSelection(): Promise<void>;
 declare function analyzePage(): Promise<void>;

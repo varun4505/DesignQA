@@ -9,6 +9,63 @@ figma.showUI(__html__, {
 });
 // Store for analysis results
 let analysisCache = new Map();
+// Density analysis function
+function analyzeDensity(frame) {
+    // Initialize 10x10 density grid
+    const densityMap = Array(10).fill(0).map(() => Array(10).fill(0));
+    if (!('children' in frame))
+        return densityMap;
+    // Get frame bounds
+    const { width, height } = frame;
+    const cellWidth = width / 10;
+    const cellHeight = height / 10;
+    // Analyze each child's contribution to density
+    frame.children.forEach(child => {
+        if (!('x' in child) || !('y' in child))
+            return;
+        // Get child bounds
+        const childBounds = {
+            left: child.x,
+            top: child.y,
+            right: child.x + (child.width || 0),
+            bottom: child.y + (child.height || 0)
+        };
+        // Calculate which cells this child overlaps
+        const startCol = Math.max(0, Math.floor(childBounds.left / cellWidth));
+        const endCol = Math.min(9, Math.floor(childBounds.right / cellWidth));
+        const startRow = Math.max(0, Math.floor(childBounds.top / cellHeight));
+        const endRow = Math.min(9, Math.floor(childBounds.bottom / cellHeight));
+        // Increment density for overlapped cells
+        for (let row = startRow; row <= endRow; row++) {
+            for (let col = startCol; col <= endCol; col++) {
+                densityMap[row][col]++;
+            }
+        }
+    });
+    return densityMap;
+}
+async function analyzeDensityCommand() {
+    const selection = figma.currentPage.selection;
+    if (selection.length !== 1 || !('children' in selection[0])) {
+        figma.ui.postMessage({
+            type: 'error',
+            message: 'Please select exactly one frame to analyze density'
+        });
+        return;
+    }
+    const frame = selection[0];
+    const densityMap = analyzeDensity(frame);
+    figma.ui.postMessage({
+        type: 'density-result',
+        data: {
+            densityMap,
+            frameName: frame.name,
+            frameWidth: frame.width,
+            frameHeight: frame.height,
+            childCount: frame.children.length
+        }
+    });
+}
 // Helper functions for new features
 function checkHierarchy(node) {
     const issues = [];
@@ -67,11 +124,55 @@ figma.ui.onmessage = async (msg) => {
             case 'apply-fix':
                 await applySingleFix(msg.fix);
                 break;
+            case 'highlight-section': {
+                const { row, col, frameWidth, frameHeight } = msg;
+                const cellWidth = frameWidth / 10;
+                const cellHeight = frameHeight / 10;
+                // Calculate section bounds
+                const sectionLeft = col * cellWidth;
+                const sectionTop = row * cellHeight;
+                // Get current selection
+                const selection = figma.currentPage.selection;
+                if (selection.length === 1 && selection[0].type === 'FRAME') {
+                    const frame = selection[0];
+                    // Remove any existing highlights first
+                    const existingHighlights = figma.currentPage.findAll(node => node.type === 'RECTANGLE' && node.name === 'density-highlight');
+                    existingHighlights.forEach(node => node.remove());
+                    // Create highlight rectangle
+                    const highlight = figma.createRectangle();
+                    highlight.name = 'density-highlight';
+                    highlight.x = frame.x + sectionLeft;
+                    highlight.y = frame.y + sectionTop;
+                    highlight.resize(cellWidth, cellHeight);
+                    highlight.fills = [{ type: 'SOLID', color: { r: 0.28, g: 1, b: 0.52 }, opacity: 0.3 }];
+                    highlight.strokes = [{ type: 'SOLID', color: { r: 0.28, g: 1, b: 0.52 } }];
+                    highlight.strokeWeight = 2;
+                    // Add to page and ensure it's above the frame
+                    if (frame.parent) {
+                        frame.parent.appendChild(highlight);
+                        // Move highlight above the frame in the layer stack
+                        const index = frame.parent.children.indexOf(frame);
+                        if (index !== -1) {
+                            frame.parent.insertChild(index + 1, highlight);
+                        }
+                    }
+                }
+                break;
+            }
+            case 'remove-highlight': {
+                // Remove any existing highlights
+                const existingHighlights = figma.currentPage.findAll(node => node.type === 'RECTANGLE' && node.name === 'density-highlight');
+                existingHighlights.forEach(node => node.remove());
+                break;
+            }
             case 'export-report':
                 await exportReport(msg.format);
                 break;
             case 'select-node':
                 await selectAndZoomToNode(msg.nodeId);
+                break;
+            case 'analyze-density':
+                await analyzeDensityCommand();
                 break;
             case 'cancel':
                 figma.closePlugin();
